@@ -1,0 +1,33 @@
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  creationTimestamp: null
+  name: manager-role
+rules:
+- apiGroups:
+  - redis.superwongo.com
+  resources:
+  - redis
+  verbs:
+  - create
+  - delete
+  - get
+  - list
+  - patch
+  - update
+  - watch
+- apiGroups:
+  - redis.superwongo.com
+  resources:
+  - redis/finalizers
+  verbs:
+  - update
+- apiGroups:
+  - redis.superwongo.com
+  resources:
+  - redis/status
+  verbs:
+  - get
+  - patch
+  - update

@@ -6,4 +6,14 @@ plugins:
   scorecard.sdk.operatorframework.io/v2: {}
 projectName: redis-operator-test
 repo: github.com/superwongo/redis-operator
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: superwongo.com
+  group: redis
+  kind: Redis
+  path: github.com/superwongo/redis-operator/api/v1alpha1
+  version: v1alpha1
 version: "3"

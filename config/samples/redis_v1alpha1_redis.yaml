@@ -1,0 +1,6 @@
+apiVersion: redis.superwongo.com/v1alpha1
+kind: Redis
+metadata:
+  name: redis-sample
+spec:
+  # TODO(user): Add fields here

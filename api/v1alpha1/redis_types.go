@@ -17,6 +17,7 @@ limitations under the License.
 package v1alpha1
 
 import (
+	corev1 "k8s.io/api/core/v1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -25,11 +26,19 @@ import (
 
 // RedisSpec defines the desired state of Redis
 type RedisSpec struct {
-	// INSERT ADDITIONAL SPEC FIELDS - desired state of cluster
-	// Important: Run "make" to regenerate code after modifying this file
-
-	// Foo is an example field of Redis. Edit redis_types.go to remove/update
-	Foo string `json:"foo,omitempty"`
+	KubernetesConfig  KubernetesConfig           `json:"KubernetesConfig"`
+	RedisConfig       *RedisConfig               `json:"redisConfig,omitempty"`
+	RedisStorage      *Storage                   `json:"storage,omitempty"`
+	RedisExporter     *RedisExporter             `json:"exporter,omitempty"`
+	TLS               *TLSConfig                 `json:"TLS,omitempty"`
+	NodeSelector      map[string]string          `json:"nodeSelector,omitempty"`
+	Affinity          *corev1.Affinity           `json:"affinity,omitempty"`
+	Tolerations       *[]corev1.Toleration       `json:"tolerations,omitempty"`
+	SecurityContext   *corev1.PodSecurityContext `json:"securityContext,omitempty"`
+	PriorityClassName string                     `json:"priorityClassName,omitempty"`
+	ReadinessProbe    *Probe                     `json:"readinessProbe,omitempty" protobuf:"bytes,11,opt,name=readinessProbe"`
+	LivenessProbe     *Probe                     `json:"livenessProbe,omitempty" protobuf:"bytes,11,opt,name=livenessProbe"`
+	Sidecars          *[]Sidecar                 `json:"sidecars,omitempty"`
 }
 
 // RedisStatus defines the observed state of Redis

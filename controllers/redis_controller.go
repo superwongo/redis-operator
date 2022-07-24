@@ -19,12 +19,14 @@ package controllers
 import (
 	"context"
 
+	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	redisv1alpha1 "github.com/superwongo/redis-operator/api/v1alpha1"
+	"github.com/superwongo/redis-operator/k8sutils"
 )
 
 // RedisReconciler reconciles a Redis object
@@ -47,10 +49,25 @@ type RedisReconciler struct {
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.12.1/pkg/reconcile
 func (r *RedisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
-	_ = log.FromContext(ctx)
+	reqLogger := log.FromContext(ctx)
+	reqLogger.Info("开始协调redis运维controller")
 
-	// TODO(user): your logic here
-
+	// 创建一个redis实例
+	instance := &redisv1alpha1.Redis{}
+	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
+	if err != nil {
+		if errors.IsNotFound(err) {
+			return ctrl.Result{}, nil
+		}
+		return ctrl.Result{}, err
+	}
+	// finalizer处理
+	if err := k8sutils.HandlerRedisFinalizer(instance, r.Client); err != nil {
+		return ctrl.Result{}, nil
+	}
+	if err := k8sutils.AddRedisFinalizer(instance, r.Client); err != nil {
+		return ctrl.Result{}, nil
+	}
 	return ctrl.Result{}, nil
 }
 

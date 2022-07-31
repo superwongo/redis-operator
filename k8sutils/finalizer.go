@@ -47,6 +47,7 @@ func HandlerRedisFinalizer(cr *redisv1alpha1.Redis, cl client.Client) error {
 			return err
 		}
 	}
+	return nil
 }
 
 func finalizeRedisService(cr *redisv1alpha1.Redis) error {

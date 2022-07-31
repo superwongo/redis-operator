@@ -1,6 +1,7 @@
 package k8sutils
 
 import (
+	redisv1alpha1 "github.com/superwongo/redis-operator/api/v1alpha1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 )
 
@@ -16,8 +17,8 @@ func getRedisLabels(name, setupType, role string, labels map[string]string) map[
 	return lbls
 }
 
-// 初始化statefulset注解
-func generateStatefulSetsAnots(stsMeta metav1.ObjectMeta) map[string]string {
+// 初始化对象注解
+func generateObjectAnots(stsMeta metav1.ObjectMeta) map[string]string {
 	anots := map[string]string{
 		"redis.superwongo.com":      "true",
 		"redis.superwongo.instance": stsMeta.GetName(),
@@ -60,4 +61,16 @@ func labelSelector(labels map[string]string) *metav1.LabelSelector {
 // 添加所有者引用
 func AddOwnerRefToObject(obj metav1.Object, ownerRef metav1.OwnerReference) {
 	obj.SetOwnerReferences(append(obj.GetOwnerReferences(), ownerRef))
+}
+
+// 设置redis所属对象
+func redisAsOwner(cr *redisv1alpha1.Redis) metav1.OwnerReference {
+	trueVar := true
+	return metav1.OwnerReference{
+		APIVersion: cr.APIVersion,
+		Kind:       cr.Kind,
+		Name:       cr.Name,
+		UID:        cr.UID,
+		Controller: &trueVar,
+	}
 }

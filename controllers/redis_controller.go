@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"time"
 
 	"k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
@@ -52,7 +53,7 @@ func (r *RedisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	reqLogger := log.FromContext(ctx)
 	reqLogger.Info("开始协调redis运维controller")
 
-	// 创建一个redis实例
+	// 创建一个redis实例对象
 	instance := &redisv1alpha1.Redis{}
 	err := r.Client.Get(context.TODO(), req.NamespacedName, instance)
 	if err != nil {
@@ -69,7 +70,18 @@ func (r *RedisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 	if err := k8sutils.AddRedisFinalizer(instance, r.Client); err != nil {
 		return ctrl.Result{}, nil
 	}
-	return ctrl.Result{}, nil
+	// 创建redis单体实例
+	err = k8sutils.CreateStandaloneRedis(instance)
+	if err != nil {
+		return ctrl.Result{}, nil
+	}
+	// 创建redis service
+	err = k8sutils.CreateStandaloneService(instance)
+	if err != nil {
+		return ctrl.Result{}, nil
+	}
+	reqLogger.Info("Will reconcile redis operator in again 10 seconds")
+	return ctrl.Result{RequeueAfter: time.Second * 10}, nil
 }
 
 // SetupWithManager sets up the controller with the Manager.

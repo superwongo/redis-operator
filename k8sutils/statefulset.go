@@ -33,11 +33,11 @@ type statefulSetParameters struct {
 	Tolerations           *[]corev1.Toleration
 	EnabledMetrics        bool
 	PersistentVolumeClaim corev1.PersistentVolumeClaim
-	ImagePullPolicy       *[]corev1.LocalObjectReference
+	ImagePullSecrets      *[]corev1.LocalObjectReference
 	ExternalConfig        *string
 }
 
-type ContainerParameters struct {
+type containerParameters struct {
 	Image                        string
 	ImagePullPolicy              corev1.PullPolicy
 	Resources                    *corev1.ResourceRequirements
@@ -55,10 +55,10 @@ type ContainerParameters struct {
 	LivenessProbe                *redisv1alpha1.Probe
 }
 
-func createOrUpdateStateful(namespace string, stsMeta metav1.ObjectMeta, params statefulSetParameters, ownerDef metav1.OwnerReference, containerParams ContainerParameters, sidecars *[]redisv1alpha1.Sidecar) error {
+func CreateOrUpdateStateful(namespace string, stsMeta metav1.ObjectMeta, params statefulSetParameters, ownerRef metav1.OwnerReference, containerParams containerParameters, sidecars *[]redisv1alpha1.Sidecar) error {
 	logger := statefulSetLogger(namespace, stsMeta.GetName())
 	// 初始化statefulset声明
-	statefulSetRef := generateStatefulSetsDef(stsMeta, params, ownerDef, containerParams, sidecars)
+	statefulSetRef := generateStatefulSetsDef(stsMeta, params, ownerRef, containerParams, sidecars)
 	// 查询已存在的statefulset
 	storedStatefulSet, err := GetStatefulSet(namespace, stsMeta.GetName())
 	if err != nil {
@@ -92,7 +92,7 @@ func GetStatefulSet(namespace string, name string) (*appsv1.StatefulSet, error) 
 }
 
 // 初始化statefulset声明
-func generateStatefulSetsDef(stsMeta metav1.ObjectMeta, params statefulSetParameters, ownerRef metav1.OwnerReference, containerParams ContainerParameters, sidecars *[]redisv1alpha1.Sidecar) *appsv1.StatefulSet {
+func generateStatefulSetsDef(stsMeta metav1.ObjectMeta, params statefulSetParameters, ownerRef metav1.OwnerReference, containerParams containerParameters, sidecars *[]redisv1alpha1.Sidecar) *appsv1.StatefulSet {
 	statefulset := &appsv1.StatefulSet{
 		TypeMeta:   generateMetaInformation("StatefulSet", "apps/v1"),
 		ObjectMeta: stsMeta,
@@ -103,7 +103,7 @@ func generateStatefulSetsDef(stsMeta metav1.ObjectMeta, params statefulSetParame
 			Template: corev1.PodTemplateSpec{
 				ObjectMeta: metav1.ObjectMeta{
 					Labels:      stsMeta.GetLabels(),
-					Annotations: generateStatefulSetsAnots(stsMeta),
+					Annotations: generateObjectAnots(stsMeta),
 				},
 				Spec: corev1.PodSpec{
 					Containers:        generateContainerDef(stsMeta.GetName(), containerParams, params.EnabledMetrics, params.ExternalConfig, sidecars),
@@ -120,8 +120,8 @@ func generateStatefulSetsDef(stsMeta metav1.ObjectMeta, params statefulSetParame
 		statefulset.Spec.Template.Spec.Tolerations = *params.Tolerations
 	}
 	// 设置镜像拉取策略
-	if params.ImagePullPolicy != nil {
-		statefulset.Spec.Template.Spec.ImagePullSecrets = *params.ImagePullPolicy
+	if params.ImagePullSecrets != nil {
+		statefulset.Spec.Template.Spec.ImagePullSecrets = *params.ImagePullSecrets
 	}
 	// 设置持久化卷模板
 	if containerParams.PersistenceEnabled != nil && *containerParams.PersistenceEnabled {
@@ -147,7 +147,7 @@ func generateStatefulSetsDef(stsMeta metav1.ObjectMeta, params statefulSetParame
 }
 
 // 初始化容器声明
-func generateContainerDef(name string, containerParams ContainerParameters, enabledMetrics bool, externalConfig *string, sidecars *[]redisv1alpha1.Sidecar) []corev1.Container {
+func generateContainerDef(name string, containerParams containerParameters, enabledMetrics bool, externalConfig *string, sidecars *[]redisv1alpha1.Sidecar) []corev1.Container {
 	containerDefinition := []corev1.Container{
 		{
 			Name:            name,
@@ -272,7 +272,7 @@ func createPVCTemplate(stsMeta metav1.ObjectMeta, storageSpec corev1.PersistentV
 	pvcTemplate.CreationTimestamp = metav1.Time{}
 	pvcTemplate.Name = stsMeta.GetName()
 	pvcTemplate.Labels = stsMeta.GetLabels()
-	pvcTemplate.Annotations = generateStatefulSetsAnots(stsMeta)
+	pvcTemplate.Annotations = generateObjectAnots(stsMeta)
 	// 未设置AccessModes的默认为可读写
 	if storageSpec.Spec.AccessModes == nil {
 		pvcTemplate.Spec.AccessModes = []corev1.PersistentVolumeAccessMode{corev1.ReadWriteOnce}

@@ -52,6 +52,12 @@ func generateMetaInformation(resourceKind string, apiVersion string) metav1.Type
 	}
 }
 
+// 标签选择
 func labelSelector(labels map[string]string) *metav1.LabelSelector {
 	return &metav1.LabelSelector{MatchLabels: labels}
+}
+
+// 添加所有者引用
+func AddOwnerRefToObject(obj metav1.Object, ownerRef metav1.OwnerReference) {
+	obj.SetOwnerReferences(append(obj.GetOwnerReferences(), ownerRef))
 }

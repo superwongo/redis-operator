@@ -61,10 +61,11 @@ func (r *RedisReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl
 		}
 		return ctrl.Result{}, err
 	}
-	// finalizer处理
+	// 移除finalizer处理
 	if err := k8sutils.HandlerRedisFinalizer(instance, r.Client); err != nil {
 		return ctrl.Result{}, nil
 	}
+	// 添加finalizer处理
 	if err := k8sutils.AddRedisFinalizer(instance, r.Client); err != nil {
 		return ctrl.Result{}, nil
 	}
